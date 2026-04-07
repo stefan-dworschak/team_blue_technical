@@ -1,16 +1,16 @@
-# Team Blue — Coding Exercises
+# Team Blue - Coding Exercises
 
 This repository contains two Python coding exercises:
 
-1. **IP Address Traffic Report** — parses a semicolon-separated request log and produces an
+1. **IP Address Traffic Report** - parses a semicolon-separated request log and produces an
    aggregated per-IP report in CSV or JSON format.
-2. **Array-Based Multiplication** — multiplies arbitrarily large non-negative integers using only
+2. **Array-Based Multiplication** - multiplies arbitrarily large non-negative integers using only
    the addition operator, with digits stored in arrays.
 
 ## Setup & Run
 
 This project uses [`uv`](https://docs.astral.sh/uv/) as the package manager and runner. Only the
-Python standard library is used for application code — `uv` handles the dev environment.
+Python standard library is used for application code - `uv` handles the dev environment.
 
 ### Prerequisites
 
@@ -68,26 +68,26 @@ producing a sorted report in CSV or JSON format.
 
 I split the solution into two classes with distinct responsibilities:
 
-- **`LogParser`** — handles file I/O and parsing. Each line is split by `;`, validated for the
+- **`LogParser`** - handles file I/O and parsing. Each line is split by `;`, validated for the
   correct number of fields, and filtered by status, in a single linear pass over the input.
   The status filter is configurable via the constructor, defaulting to `"OK"`.
 
-- **`ReportGenerator`** — handles aggregation and output formatting. The `aggregate()` method
+- **`ReportGenerator`** - handles aggregation and output formatting. The `aggregate()` method
   builds a `dict[str, IPTrafficSummary]` mapping IP addresses to their running totals in a single
   linear pass. Totals for requests and bytes are tracked inline to avoid a second pass. Percentages
   are computed once after aggregation, then the result is sorted by request count descending.
 
 #### Key Decisions
 
-- **`IPTrafficSummary` dataclass** — aggregation writes directly into `IPTrafficSummary` instances
+- **`IPTrafficSummary` dataclass** - aggregation writes directly into `IPTrafficSummary` instances
   stored in the dict. This avoids an intermediate `list[int]` representation and a separate
   construction step, keeping the code cleaner and the data self-documenting.
 
-- **Separation of concerns in formatting** — `to_csv()` and `to_json()` receive fully computed
+- **Separation of concerns in formatting** - `to_csv()` and `to_json()` receive fully computed
   `IPTrafficSummary` objects and only handle serialisation. No business logic lives in the
   formatters, so adding a new output format requires only a new formatting method.
 
-- **No csv/io modules** — CSV output uses simple string concatenation with f-strings. For this
+- **No csv/io modules** - CSV output uses simple string concatenation with f-strings. For this
   use case the data contains no commas or special characters that would need escaping, so the
   stdlib `csv` module adds overhead without benefit.
 
@@ -100,26 +100,26 @@ Multiply integers using only single-digit addition, with digits stored in arrays
 
 #### Architecture
 
-- **`ArrayNumber`** — wraps a `list[int]` of digits in big-endian order (most significant first).
+- **`ArrayNumber`** - wraps a `list[int]` of digits in big-endian order (most significant first).
   Supports `from_int()` for construction, `__add__` for addition, `__str__` for display, and
   `__eq__` for comparison. Addition reverses both digit lists, walks them with a carry, and
   reverses the result.
 
-- **`ArrayMultiplier`** — implements long multiplication using only addition. For each digit `d`
+- **`ArrayMultiplier`** - implements long multiplication using only addition. For each digit `d`
   at position `p` in the multiplier, the multiplicand is shifted left by `p` positions (appending
   zeros) and added `d` times to the running result. This mirrors pencil-and-paper multiplication.
 
 #### Key Decisions
 
-- **Big-endian storage** — digits are stored most-significant-first for natural display. Addition
+- **Big-endian storage** - digits are stored most-significant-first for natural display. Addition
   internally reverses to work from least-significant, which is standard for carry propagation.
 
-- **No Python `*` operator** — the constraint says "using addition only". The `*` operator is not
+- **No Python `*` operator** - the constraint says "using addition only". The `*` operator is not
   used anywhere in the multiplication logic. Division/modulo (`//`, `%`) are used only for
   carry propagation within single-digit addition (splitting a two-digit sum into digit + carry),
   which is a necessary primitive.
 
-- **Shift via zero-padding** — instead of tracking position offsets, shifting is done by appending
+- **Shift via zero-padding** - instead of tracking position offsets, shifting is done by appending
   zeros to the digit list. This keeps the implementation simple.
 
 #### Why not Karatsuba or FFT?
