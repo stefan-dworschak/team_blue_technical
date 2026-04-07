@@ -1,4 +1,11 @@
-# Design Thinking
+# Team Blue — Coding Exercises
+
+This repository contains two Python coding exercises:
+
+1. **IP Address Traffic Report** — parses a semicolon-separated request log and produces an
+   aggregated per-IP report in CSV or JSON format.
+2. **Array-Based Multiplication** — multiplies arbitrarily large non-negative integers using only
+   the addition operator, with digits stored in arrays.
 
 ## Setup & Run
 
@@ -22,7 +29,7 @@ uv sync
 uv run pytest
 ```
 
-### Exercise 1 — Generate the IP traffic report
+### Generate the IP traffic report
 
 Place the input log at `logfiles/requests.log`, then run:
 
@@ -33,7 +40,7 @@ uv run python report_generator.py
 The report is written to `reports/ipaddress.csv`. The output format is inferred from the file
 extension, so passing a `.json` filename will produce JSON output instead.
 
-### Exercise 2 — Array-based multiplication
+### Run the array multiplier
 
 `array_multiplier.py` exposes the `ArrayNumber` and `ArrayMultiplier` classes. The CLI provides
 two subcommands:
@@ -48,14 +55,16 @@ uv run python array_multiplier.py multiply 123 456
 
 ---
 
-## Exercise 1 — IP Address Traffic Report
+## Design Thinking
 
-### Problem Analysis
+### IP Address Traffic Report
+
+#### Problem Analysis
 
 The task requires reading a semicolon-delimited log file, filtering records, aggregating by IP, and
 producing a sorted report in CSV or JSON format.
 
-### Architecture
+#### Architecture
 
 I split the solution into two classes with distinct responsibilities:
 
@@ -68,28 +77,28 @@ I split the solution into two classes with distinct responsibilities:
   linear pass. Totals for requests and bytes are tracked inline to avoid a second pass. Percentages
   are computed once after aggregation, then the result is sorted by request count descending.
 
-### Key Decisions
+#### Key Decisions
 
-- **`IPTrafficSummary` dataclass** — aggregation writes directly into `IPTrafficSummary` instances stored in
-  the dict. This avoids an intermediate `list[int]` representation and a separate construction
-  step, keeping the code cleaner and the data self-documenting.
+- **`IPTrafficSummary` dataclass** — aggregation writes directly into `IPTrafficSummary` instances
+  stored in the dict. This avoids an intermediate `list[int]` representation and a separate
+  construction step, keeping the code cleaner and the data self-documenting.
 
 - **Separation of concerns in formatting** — `to_csv()` and `to_json()` receive fully computed
-  `IPTrafficSummary` objects and only handle serialisation. No business logic lives in the formatters,
-  so adding a new output format requires only a new formatting method.
+  `IPTrafficSummary` objects and only handle serialisation. No business logic lives in the
+  formatters, so adding a new output format requires only a new formatting method.
 
 - **No csv/io modules** — CSV output uses simple string concatenation with f-strings. For this
   use case the data contains no commas or special characters that would need escaping, so the
   stdlib `csv` module adds overhead without benefit.
 
-## Exercise 2 — Array-Based Multiplication
+### Array-Based Multiplication
 
-### Problem Analysis
+#### Problem Analysis
 
 Multiply integers using only single-digit addition, with digits stored in arrays. Must handle
 100! which is 158 digits long.
 
-### Architecture
+#### Architecture
 
 - **`ArrayNumber`** — wraps a `list[int]` of digits in big-endian order (most significant first).
   Supports `from_int()` for construction, `__add__` for addition, `__str__` for display, and
@@ -100,7 +109,7 @@ Multiply integers using only single-digit addition, with digits stored in arrays
   at position `p` in the multiplier, the multiplicand is shifted left by `p` positions (appending
   zeros) and added `d` times to the running result. This mirrors pencil-and-paper multiplication.
 
-### Key Decisions
+#### Key Decisions
 
 - **Big-endian storage** — digits are stored most-significant-first for natural display. Addition
   internally reverses to work from least-significant, which is standard for carry propagation.
@@ -113,7 +122,7 @@ Multiply integers using only single-digit addition, with digits stored in arrays
 - **Shift via zero-padding** — instead of tracking position offsets, shifting is done by appending
   zeros to the digit list. This keeps the implementation simple.
 
-### Why not Karatsuba or FFT?
+#### Why not Karatsuba or FFT?
 
 The exercise specifically asks to use addition for multiplication. Karatsuba and FFT-based
 approaches optimise the multiplication step but don't satisfy the "addition only" constraint.
