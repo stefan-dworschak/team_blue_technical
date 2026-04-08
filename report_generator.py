@@ -88,8 +88,8 @@ class ReportGenerator:
             total_bytes += log_record.bytes_sent
 
         for ip_traffic_summary in ip_traffic_report.values():
-            ip_traffic_summary.pct_requests = (ip_traffic_summary.request_count / total_requests * 100) if total_requests else 0.0
-            ip_traffic_summary.pct_bytes = (ip_traffic_summary.total_bytes / total_bytes * 100) if total_bytes else 0.0
+            ip_traffic_summary.pct_requests = (ip_traffic_summary.request_count / total_requests) if total_requests else 0.0
+            ip_traffic_summary.pct_bytes = (ip_traffic_summary.total_bytes / total_bytes) if total_bytes else 0.0
 
         return sorted(ip_traffic_report.values(), key=lambda r: r.request_count, reverse=True)
 
@@ -98,7 +98,7 @@ class ReportGenerator:
         header = "IP Address,Number of Requests,Percentage of Total Requests,Total Bytes Sent,Percentage of Total Bytes\n"
         body = ""
         for r in rows:
-            body += f"{r.ip_address},{r.request_count},{r.pct_requests:.2f}%,{r.total_bytes},{r.pct_bytes:.2f}%\n"
+            body += f"{r.ip_address},{r.request_count},{round(r.pct_requests, 2)},{r.total_bytes},{round(r.pct_bytes, 2)}\n"
         return header + body
 
     def to_json(self, rows: list[IPTrafficSummary]) -> str:

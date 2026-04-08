@@ -64,6 +64,34 @@ uv run python array_multiplier.py multiply 123 456
 The task requires reading a semicolon-delimited log file, filtering records, aggregating by IP, and
 producing a sorted report in CSV or JSON format.
 
+#### Assumed Data Types
+
+The exercise document specifies the input columns and their rough meaning, but leaves several
+representation details unspecified. The following assumptions are made:
+
+**Input (`logfiles/requests.log`)**
+
+- `TIMESTAMP` - free-form string; no parsing or timezone normalisation is performed since the
+  report does not need to reason about time.
+- `BYTES` - non-negative integer (parsed via `int()`); lines with non-numeric values are skipped.
+- `STATUS` - string token compared verbatim against the configured filter (default `"OK"`).
+- `REMOTE_ADDR` - string treated as an opaque identifier; no IPv4/IPv6 validation is performed,
+  so any unique address representation is grouped as-is.
+- Field separator is `;`; lines without exactly 4 fields are skipped silently.
+
+**Output (`reports/ipaddress.csv` / `.json`)**
+
+- `IP Address` - string, copied verbatim from the input.
+- `Number of Requests` - integer count.
+- `Total Bytes Sent` - integer sum of `BYTES` for that IP.
+- `Percentage of Total Requests` and `Percentage of Total Bytes` - represented as a **fraction
+  in the range `[0.0, 1.0]`** (e.g. `0.6` for 60%), rounded to 2 decimal places. The exercise
+  does not specify whether percentages should be `0-100` or `0-1`, nor whether they should carry
+  a `%` suffix - fractions were chosen as the most machine-readable form for downstream tooling.
+- CSV output is UTF-8, comma-separated, with a single header row and no quoting (the data
+  contains no commas or special characters that would require escaping).
+- JSON output is a top-level array of objects with `snake_case` keys, indented with 2 spaces.
+
 #### Architecture
 
 I split the solution into two classes with distinct responsibilities:

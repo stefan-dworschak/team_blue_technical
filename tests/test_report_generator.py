@@ -102,10 +102,10 @@ class TestReportGenerator(unittest.TestCase):
 
     def test_generate_report_percentages(self) -> None:
         report = self.generator.generate_report(self.records)
-        self.assertAlmostEqual(report[0].pct_requests, 60.0)
-        self.assertAlmostEqual(report[1].pct_requests, 40.0)
-        self.assertAlmostEqual(report[0].pct_bytes, 1792 / 4864 * 100)
-        self.assertAlmostEqual(report[1].pct_bytes, 3072 / 4864 * 100)
+        self.assertAlmostEqual(report[0].pct_requests, 0.6)
+        self.assertAlmostEqual(report[1].pct_requests, 0.4)
+        self.assertAlmostEqual(report[0].pct_bytes, 0.368421053) 
+        self.assertAlmostEqual(report[1].pct_bytes, 0.631578947)
 
     def test_sorted_by_request_count_descending(self) -> None:
         report = self.generator.generate_report(self.records)
@@ -118,49 +118,70 @@ class TestReportGenerator(unittest.TestCase):
 
     def test_to_csv_format(self) -> None:
         report = [
-            IPTrafficSummary("10.0.0.1", 3, 60.0, 1500, 75.0),
-            IPTrafficSummary("10.0.0.2", 2, 40.0, 500, 25.0),
+            IPTrafficSummary("10.0.0.1", 3, 0.6, 1500, 0.75),
+            IPTrafficSummary("10.0.0.2", 2, 0.4, 500, 0.25),
         ]
         csv_output = self.generator.to_csv(report)
-        lines = csv_output.strip().split("\n")
-        self.assertEqual(len(lines), 3)
-        self.assertIn("IP Address", lines[0])
-        self.assertIn("10.0.0.1", lines[1])
-        self.assertIn("60.00%", lines[1])
-        self.assertIn("10.0.0.2", lines[2])
+        expected = (
+            "IP Address,Number of Requests,Percentage of Total Requests,Total Bytes Sent,Percentage of Total Bytes\n"
+            "10.0.0.1,3,0.6,1500,0.75\n"
+            "10.0.0.2,2,0.4,500,0.25\n"
+        )
+        self.assertEqual(csv_output, expected)
 
     def test_to_json_format(self) -> None:
         report = [
-            IPTrafficSummary("10.0.0.1", 3, 60.0, 1500, 75.0),
+            IPTrafficSummary("10.0.0.1", 3, 0.6, 1500, 0.75),
         ]
         json_output = self.generator.to_json(report)
-        data = json.loads(json_output)
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["ip_address"], "10.0.0.1")
-        self.assertEqual(data[0]["number_of_requests"], 3)
-        self.assertEqual(data[0]["percentage_of_total_requests"], 60.0)
+        self.assertEqual(
+            json.loads(json_output),
+            [
+                {
+                    "ip_address": "10.0.0.1",
+                    "number_of_requests": 3,
+                    "percentage_of_total_requests": 0.6,
+                    "total_bytes_sent": 1500,
+                    "percentage_of_total_bytes": 0.75,
+                },
+            ],
+        )
 
     def test_write_report_csv(self) -> None:
-        report = [IPTrafficSummary("10.0.0.1", 1, 100.0, 512, 100.0)]
+        report = [IPTrafficSummary("10.0.0.1", 1, 1.0, 512, 1.0)]
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             path = f.name
         try:
             self.generator.write_report(report, path)
             with open(path) as f:
                 content = f.read()
-            self.assertIn("IP Address", content)
-            self.assertIn("10.0.0.1", content)
+            expected = (
+                "IP Address,Number of Requests,Percentage of Total Requests,Total Bytes Sent,Percentage of Total Bytes\n"
+                "10.0.0.1,1,1.0,512,1.0\n"
+            )
+            self.assertEqual(content, expected)
         finally:
             os.unlink(path)
 
     def test_write_report_json(self) -> None:
-        report = [IPTrafficSummary("10.0.0.1", 1, 100.0, 512, 100.0)]
+        report = [IPTrafficSummary("10.0.0.1", 1, 1.0, 512, 1.0)]
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
         try:
             self.generator.write_report(report, path)
             with open(path) as f:
                 data = json.load(f)
-            self.assertEqual(data[0]["ip_address"], "10.0.0.1")
+            self.assertEqual(
+                data,
+                [
+                    {
+                        "ip_address": "10.0.0.1",
+                        "number_of_requests": 1,
+                        "percentage_of_total_requests": 1.0,
+                        "total_bytes_sent": 512,
+                        "percentage_of_total_bytes": 1.0,
+                    },
+                ],
+            )
         finally:
             os.unlink(path)
